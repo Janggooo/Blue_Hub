@@ -1,7 +1,7 @@
 # BlueHub
 
 An interactive directory of ADNU organizations and events, built by **BlueByte**
-(Micco Dominic D. Alcantara, Janggo Felix Sta. Rosa III, Xildjian Asetre).
+(Micco Dominic D. Alcantara, Felix Sta. Rosa III, Xildjian Asetre).
 
 Stack: **Vue 3 (Vite)** frontend · **Flask** backend · **Oracle Database**.
 
