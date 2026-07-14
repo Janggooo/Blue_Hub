@@ -11,44 +11,95 @@ bluehub/
 └── frontend/    Vue 3 app
 ```
 
+## Prerequisites
+
+- Python 3.10+ for the backend
+- Node.js 18+ for the frontend
+- Oracle Database access:
+  - local Oracle Database XE, or
+  - Oracle Autonomous Database on Oracle Cloud
+
 ## 1. Database setup (Oracle)
 
-You need access to an Oracle database — either a local **Oracle Database XE**
-install, or a free **Oracle Autonomous Database** instance on Oracle Cloud.
+1. Create (or reuse) a schema/user for the app, for example `bluehub_app`.
+2. Grant the schema the required privileges:
+   - `CONNECT`
+   - `RESOURCE`
+   - `CREATE SEQUENCE`
+3. Connect as that schema user using SQL*Plus, SQLcl, or SQL Developer.
+4. Run the SQL scripts from the repository root:
 
-1. Create (or use) a schema/user for the app, e.g. `bluehub_app`, and grant it
-   `CONNECT`, `RESOURCE`, and `CREATE SEQUENCE` (or the ADB equivalent).
-2. Connect as that user with SQL*Plus, SQLcl, or SQL Developer and run:
-   ```sql
-   @backend/sql/schema.sql
-   @backend/sql/seed.sql   -- optional sample data
-   ```
-   The seed script creates three accounts, all with password `password123`:
-   - `admin@adnu.edu.ph` — admin
-   - `officer@adnu.edu.ph` — officer of "ADNU Computer Science Society"
-   - `student@adnu.edu.ph` — student
+```sql
+@backend/sql/schema.sql
+@backend/sql/seed.sql   -- optional sample data
+```
+
+The seed script creates three sample accounts, all with password `password123`:
+
+- `admin@adnu.edu.ph` — admin
+- `officer@adnu.edu.ph` — officer of `ADNU Computer Science Society`
+- `student@adnu.edu.ph` — student
 
 ## 2. Backend setup (Flask)
 
+From the repository root:
+
 ```bash
 cd backend
-python3 -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+python -m venv venv
+```
+
+Activate the virtual environment:
+
+- macOS / Linux:
+  ```bash
+  source venv/bin/activate
+  ```
+- Windows PowerShell:
+  ```powershell
+  .\venv\Scripts\Activate.ps1
+  ```
+- Windows Command Prompt:
+  ```cmd
+  venv\Scripts\activate.bat
+  ```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
+```
 
-cp .env.example .env
-# edit .env with your Oracle credentials (ORACLE_USER, ORACLE_PASSWORD,
-# ORACLE_HOST, ORACLE_PORT, ORACLE_SERVICE_NAME) and a real JWT_SECRET_KEY
+Create the environment file and update it with your Oracle credentials:
 
+```bash
+copy .env.example .env
+```
+
+Edit `.env` and set:
+
+- `ORACLE_USER`
+- `ORACLE_PASSWORD`
+- `ORACLE_HOST`
+- `ORACLE_PORT`
+- `ORACLE_SERVICE_NAME`
+- `JWT_SECRET_KEY`
+
+Start the backend server:
+
+```bash
 python run.py
 ```
 
-The API runs at `http://localhost:5000`. Check `http://localhost:5000/api/health`.
+The API will be available at `http://localhost:5000`.
+Check health at `http://localhost:5000/api/health`.
 
-> Uses the `oracledb` driver in "thin" mode by default — no separate Oracle
-> Instant Client install needed for a typical local XE / Autonomous DB setup.
+> The backend uses the `oracledb` driver in thin mode by default, so a separate
+> Oracle Instant Client install is not required for a standard XE or ADB setup.
 
 ## 3. Frontend setup (Vue)
+
+From the repository root:
 
 ```bash
 cd frontend
@@ -56,33 +107,26 @@ npm install
 npm run dev
 ```
 
-The app runs at `http://localhost:5173` and proxies `/api/*` requests to the
-Flask server on port 5000 (see `vite.config.js`).
+The frontend runs at `http://localhost:5173` and proxies `/api/*` requests to
+`http://localhost:5000` by default (see `frontend/vite.config.js`).
 
 ## 4. Project structure notes
 
-- **Auth**: JWT-based. `POST /register` and `POST /login` return an
-  `access_token`, stored client-side and sent as `Authorization: Bearer <token>`.
-  New signups always get the `student` role — an admin promotes accounts to
-  `officer` (and links them to an organization) directly in the database or
-  a future admin panel.
-- **Roles**: `student`, `officer`, `admin`. Officers can only manage events
-  and the organization profile tied to their `organization_id`.
-- **CRUD**: see `backend/app/routes/` for events, organizations, auth, and
-  the dashboard endpoint.
+- **Auth**: JWT-based. `POST /register` and `POST /login` return an `access_token`.
+  The token is stored client-side and sent as `Authorization: Bearer <token>`.
+- **Roles**: `student`, `officer`, `admin`.
+  - `student` is the default role for new signups.
+  - `officer` accounts can manage events and the organization profile linked to
+    their `organization_id`.
+  - `admin` can manage broader application state and user roles.
+- **Routes**: see `backend/app/routes/` for implementation of auth, events,
+  organizations, dashboard, and related endpoints.
 
-## 5. What's implemented (MVP)
+## 5. Implemented features (MVP)
 
 - [x] Register / login / logout (JWT)
-- [x] Event CRUD, scoped to the officer's organization
-- [x] Organization profile view + edit
-- [x] Event directory: search + category/organization/date filters
-- [x] Organization directory: search + category filter
-- [x] User dashboard: officers see and manage their org's events
-
-## 6. Next steps to build on this
-
-- Admin screens to create organizations and promote users to `officer`
-- Image upload (currently just an image URL field)
-- Pagination for large event/org lists
-- Categories management UI (currently seeded directly in the DB)
+- [x] Event CRUD scoped to the officer's organization
+- [x] Organization profile view and edit
+- [x] Event directory search with category, organization, and date filters
+- [x] Organization directory search with category filtering
+- [x] Officer dashboard for managing their organization's events
